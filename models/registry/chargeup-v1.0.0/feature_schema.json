@@ -1,0 +1,30 @@
+{
+  "version": "chargeup-v1.0.0",
+  "features": [
+    "temperature_c",
+    "humidity_pct",
+    "rainfall_mm",
+    "latitude",
+    "longitude",
+    "session_count",
+    "avg_session_minutes",
+    "avg_power_kw",
+    "connector_errors",
+    "voltage_v",
+    "current_a",
+    "availability_pct",
+    "energy_kwh",
+    "hour_sin",
+    "hour_cos",
+    "dow_sin",
+    "dow_cos",
+    "is_weekend",
+    "is_peak_hour",
+    "station_segment"
+  ],
+  "targets": {
+    "regression": "next_hour_demand_kwh",
+    "classification": "station_fault_flag"
+  },
+  "feature_builder": "src.model_features.build_model_features"
+}
