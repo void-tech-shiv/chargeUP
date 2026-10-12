@@ -1,0 +1,42 @@
+name: ChargeUp SLM Validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'api/**'
+      - 'tests/**'
+      - 'requirements.txt'
+      - '.github/workflows/slm-validation.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Generate and clean data
+        run: |
+          python -m src.generate_data
+          python -m src.week02_cleaning
+      - name: Run SLM Weeks 3 to 11
+        run: |
+          python -m src.week03_linear_regression
+          python -m src.week04_regularized_models
+          python -m src.week05_cv_selection
+          python -m src.week06_decision_tree
+          python -m src.week07_random_forest
+          python -m src.week08_xgboost_shap
+          python -m src.week09_station_clustering
+          python -m src.week10_nested_validation
+          python -m src.week11_package_champion
+      - name: Test Week 12 FastAPI
+        run: python -m pytest -q
