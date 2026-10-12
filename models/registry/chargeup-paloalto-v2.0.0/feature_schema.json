@@ -1,0 +1,31 @@
+{
+  "version": "chargeup-paloalto-v2.0.0",
+  "dataset": "City of Palo Alto ChargePoint Data CY20Q4.csv",
+  "features": [
+    "latitude",
+    "longitude",
+    "session_count",
+    "avg_session_minutes",
+    "avg_total_duration_minutes",
+    "avg_power_kw",
+    "energy_kwh",
+    "fee_usd",
+    "level1_share",
+    "level2_share",
+    "dc_fast_share",
+    "hour_sin",
+    "hour_cos",
+    "dow_sin",
+    "dow_cos",
+    "is_weekend",
+    "is_peak_hour",
+    "station_segment"
+  ],
+  "targets": {
+    "regression": "next_hour_demand_kwh",
+    "classification": "station_fault_flag"
+  },
+  "classification_target_note": "next-hour ChargePoint server-termination proxy derived from the source `Ended By` field; it is not a ground-truth hardware failure label",
+  "feature_builder": "src.model_features.build_model_features",
+  "week10_selected_regression_max_depth": 5
+}

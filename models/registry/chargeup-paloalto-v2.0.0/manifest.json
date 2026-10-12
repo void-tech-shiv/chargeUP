@@ -1,0 +1,41 @@
+{
+  "version": "chargeup-paloalto-v2.0.0",
+  "slm_week": 11,
+  "dataset": "City of Palo Alto Electric Vehicle Charging Station Usage (July 2011 - Dec 2020)",
+  "source_file": "ChargePoint Data CY20Q4.csv",
+  "selection_source": "reports/week10_validation_metrics.json",
+  "regression_champion": "xgboost_max_depth_5",
+  "classification_champion": "calibrated_logistic_regression",
+  "classification_champion_rule": "higher sealed-test PR-AUC than calibrated XGBoost",
+  "classification_target_note": "next-hour ChargePoint server-termination proxy derived from the source `Ended By` field; it is not a ground-truth hardware failure label",
+  "feature_count": 18,
+  "sealed_test_metrics": {
+    "regression": {
+      "mae": 2.8946751187975104,
+      "rmse": 5.063206130719355,
+      "r2": 0.07563828786113524
+    },
+    "classification": {
+      "precision": 0.01384402399630826,
+      "recall": 0.9259259259259259,
+      "f1": 0.02728016731835955,
+      "roc_auc": 0.6247030812810961,
+      "pr_auc": 0.01686826602201398,
+      "balanced_accuracy": 0.5779040419207633,
+      "mcc": 0.03966111811574153,
+      "brier": 0.3628672603823222
+    }
+  },
+  "psi_baseline": "baseline_stats.json",
+  "artifacts": {
+    "regression_model": "regression_model.joblib",
+    "fault_model": "fault_model.joblib",
+    "station_segments": "station_segments.json",
+    "feature_schema": "feature_schema.json"
+  },
+  "sha256": {
+    "regression_model.joblib": "36c22768ef29b16dc03d97e35a3d3debc3f1b0c2094bd57ebaaebaf60e49f83a",
+    "fault_model.joblib": "184f857968151db4943a4e84e06a41a6e3e50170b9b2b91d3d1a2d8eae703bb0"
+  },
+  "retraining_trigger": "PSI >= 0.25"
+}

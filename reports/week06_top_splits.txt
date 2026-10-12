@@ -1,28 +1,46 @@
-|--- availability_pct <= 92.42
-|   |--- energy_kwh <= 16.98
-|   |   |--- humidity_pct <= 76.66
-|   |   |   |--- class: 1
-|   |   |--- humidity_pct >  76.66
-|   |   |   |--- class: 1
-|   |--- energy_kwh >  16.98
-|   |   |--- class: 1
-|--- availability_pct >  92.42
-|   |--- energy_kwh <= 9.65
-|   |   |--- avg_power_kw <= 33.28
-|   |   |   |--- energy_kwh <= 7.48
-|   |   |   |   |--- truncated branch of depth 2
-|   |   |   |--- energy_kwh >  7.48
-|   |   |   |   |--- truncated branch of depth 2
-|   |   |--- avg_power_kw >  33.28
-|   |   |   |--- hour_cos <= 0.38
+|--- fee_usd <= 0.02
+|   |--- avg_total_duration_minutes <= 78.41
+|   |   |--- latitude <= 37.45
+|   |   |   |--- avg_session_minutes <= 56.91
+|   |   |   |   |--- class: 1
+|   |   |   |--- avg_session_minutes >  56.91
 |   |   |   |   |--- class: 0
-|   |   |   |--- hour_cos >  0.38
+|   |   |--- latitude >  37.45
+|   |   |   |--- hour_cos <= -0.13
+|   |   |   |   |--- class: 1
+|   |   |   |--- hour_cos >  -0.13
 |   |   |   |   |--- class: 0
-|   |--- energy_kwh >  9.65
-|   |   |--- energy_kwh <= 18.74
-|   |   |   |--- session_count <= 6.50
-|   |   |   |   |--- truncated branch of depth 2
-|   |   |   |--- session_count >  6.50
-|   |   |   |   |--- truncated branch of depth 2
-|   |   |--- energy_kwh >  18.74
-|   |   |   |--- class: 0
+|   |--- avg_total_duration_minutes >  78.41
+|   |   |--- longitude <= -122.14
+|   |   |   |--- latitude <= 37.44
+|   |   |   |   |--- class: 0
+|   |   |   |--- latitude >  37.44
+|   |   |   |   |--- class: 0
+|   |   |--- longitude >  -122.14
+|   |   |   |--- avg_total_duration_minutes <= 109.31
+|   |   |   |   |--- class: 0
+|   |   |   |--- avg_total_duration_minutes >  109.31
+|   |   |   |   |--- class: 0
+|--- fee_usd >  0.02
+|   |--- longitude <= -122.14
+|   |   |--- hour_cos <= 0.13
+|   |   |   |--- avg_total_duration_minutes <= 68.62
+|   |   |   |   |--- class: 1
+|   |   |   |--- avg_total_duration_minutes >  68.62
+|   |   |   |   |--- class: 1
+|   |   |--- hour_cos >  0.13
+|   |   |   |--- longitude <= -122.16
+|   |   |   |   |--- class: 0
+|   |   |   |--- longitude >  -122.16
+|   |   |   |   |--- class: 0
+|   |--- longitude >  -122.14
+|   |   |--- avg_total_duration_minutes <= 59.89
+|   |   |   |--- avg_session_minutes <= 3.93
+|   |   |   |   |--- class: 1
+|   |   |   |--- avg_session_minutes >  3.93
+|   |   |   |   |--- class: 1
+|   |   |--- avg_total_duration_minutes >  59.89
+|   |   |   |--- avg_power_kw <= 0.95
+|   |   |   |   |--- class: 0
+|   |   |   |--- avg_power_kw >  0.95
+|   |   |   |   |--- class: 0

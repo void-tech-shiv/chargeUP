@@ -1,63 +1,105 @@
 {
   "week": 3,
+  "dataset": "City of Palo Alto ChargePoint CY20Q4",
   "target": "next_hour_demand_kwh",
   "features": [
-    "temperature_c",
-    "humidity_pct",
-    "rainfall_mm",
     "latitude",
     "longitude",
     "session_count",
     "avg_session_minutes",
+    "avg_total_duration_minutes",
     "avg_power_kw",
-    "connector_errors",
-    "voltage_v",
-    "current_a",
-    "availability_pct",
     "energy_kwh",
+    "fee_usd",
+    "level1_share",
+    "level2_share",
+    "dc_fast_share",
     "hour",
     "day_of_week"
   ],
-  "split": {
-    "strategy": "chronological 80/20 with one-hour purge before test boundary",
-    "split_time": "2026-09-12T04:00:00",
-    "train_rows": 4272,
-    "test_rows": 1072,
-    "train_time_min": "2026-09-01T00:00:00",
-    "train_time_max": "2026-09-12T02:00:00",
-    "test_time_min": "2026-09-12T04:00:00",
-    "test_time_max": "2026-09-14T22:00:00"
-  },
+  "split_time": "2019-02-13T15:00:00",
+  "train_rows": 178820,
+  "test_rows": 56146,
   "ols": {
-    "mae": 4.602442034572487,
-    "rmse": 5.9217065403311455,
-    "r2": 0.7051974668469807
+    "mae": 3.209601915052496,
+    "rmse": 5.230020783539933,
+    "r2": 0.013726053999500443
   },
   "gradient_descent": {
-    "mae": 4.602455631323351,
-    "rmse": 5.921716314166367,
-    "r2": 0.7051964936971833,
-    "learning_rate": 0.03,
-    "max_iter": 5000,
-    "iterations_run": 519,
-    "final_scaled_mse": 0.2788873858977505,
+    "mae": 3.209599337924684,
+    "rmse": 5.2300255702162035,
+    "r2": 0.013724248662027039,
+    "iterations_run": 1579,
+    "final_scaled_mse": 0.9656163172796557,
     "loss_history": [
-      {"iteration": 1, "mse_scaled": 0.9999999999999998},
-      {"iteration": 100, "mse_scaled": 0.28218976302592713},
-      {"iteration": 200, "mse_scaled": 0.27898104714057903},
-      {"iteration": 300, "mse_scaled": 0.27889048289139684},
-      {"iteration": 400, "mse_scaled": 0.2788875050327699},
-      {"iteration": 500, "mse_scaled": 0.2788873883548099}
+      {
+        "iteration": 1,
+        "mse_scaled": 1.0000000000000002
+      },
+      {
+        "iteration": 100,
+        "mse_scaled": 0.9658633725445503
+      },
+      {
+        "iteration": 200,
+        "mse_scaled": 0.9656523500928657
+      },
+      {
+        "iteration": 300,
+        "mse_scaled": 0.9656249441555493
+      },
+      {
+        "iteration": 400,
+        "mse_scaled": 0.9656195439977003
+      },
+      {
+        "iteration": 500,
+        "mse_scaled": 0.9656178116191986
+      },
+      {
+        "iteration": 600,
+        "mse_scaled": 0.9656170709787635
+      },
+      {
+        "iteration": 700,
+        "mse_scaled": 0.9656167199555767
+      },
+      {
+        "iteration": 800,
+        "mse_scaled": 0.9656165466311796
+      },
+      {
+        "iteration": 900,
+        "mse_scaled": 0.9656164578406047
+      },
+      {
+        "iteration": 1000,
+        "mse_scaled": 0.9656164097189432
+      },
+      {
+        "iteration": 1100,
+        "mse_scaled": 0.9656163812481571
+      },
+      {
+        "iteration": 1200,
+        "mse_scaled": 0.9656163623141615
+      },
+      {
+        "iteration": 1300,
+        "mse_scaled": 0.9656163480445568
+      },
+      {
+        "iteration": 1400,
+        "mse_scaled": 0.9656163360910521
+      },
+      {
+        "iteration": 1500,
+        "mse_scaled": 0.9656163253213362
+      }
     ]
   },
-  "comparison": {
-    "rmse_difference_gd_minus_ols": 9.77383522116071e-06,
-    "mae_difference_gd_minus_ols": 1.3596750863875684e-05
-  },
-  "source_file": "data/processed/chargeup_sessions_clean.csv",
-  "warning": null,
   "mlflow": {
     "logged": false,
-    "reason": "MLflow import failed in the repository-preparation runtime; mlflow is included in requirements.txt and the script logs the first run automatically when installed."
+    "reason": "disabled"
   }
 }

@@ -1,17 +1,20 @@
 {
   "week": 9,
-  "split_time": "2026-09-12T04:00:00",
-  "station_count": 16,
+  "split_time": "2019-02-13T15:00:00",
+  "station_count": 33,
   "kmeans_clusters": 4,
-  "dbscan_clusters_excluding_noise": 4,
-  "dbscan_noise_stations": 5,
-  "pca_explained_variance_ratio": [0.5290820315910741, 0.25077392763917394],
-  "pca_total_explained_variance": 0.7798559592302481,
+  "dbscan_clusters_excluding_noise": 6,
+  "dbscan_noise_stations": 7,
+  "pca_explained_variance_ratio": [
+    0.40126050030239535,
+    0.2797238813172985
+  ],
+  "pca_total_explained_variance": 0.6809843816196939,
   "segment_feedback": {
-    "ridge_mae_without_segment": 4.645382327890011,
-    "ridge_mae_with_segment": 4.629746887119346,
-    "logistic_pr_auc_without_segment": 0.9377914105778544,
-    "logistic_pr_auc_with_segment": 0.9325637924947007
+    "ridge_mae_without_segment": 3.2055558304551424,
+    "ridge_mae_with_segment": 3.21374581189808,
+    "logistic_pr_auc_without_segment": 0.01686826602201398,
+    "logistic_pr_auc_with_segment": 0.0169285542031119
   },
   "station_report": "reports/week09_station_segments.csv",
   "segment_map": "models/week09_station_segments.json"

@@ -1,17 +1,59 @@
 {
   "week": 4,
+  "dataset": "City of Palo Alto ChargePoint CY20Q4",
   "target_regression": "next_hour_demand_kwh",
   "target_classification": "station_fault_flag",
-  "features": ["temperature_c","humidity_pct","rainfall_mm","latitude","longitude","session_count","avg_session_minutes","avg_power_kw","connector_errors","voltage_v","current_a","availability_pct","energy_kwh","hour_sin","hour_cos","dow_sin","dow_cos","is_weekend","is_peak_hour"],
-  "engineered_features": ["hour_sin","hour_cos","dow_sin","dow_cos","is_weekend","is_peak_hour"],
-  "split_time": "2026-09-12T04:00:00",
-  "train_rows": 4272,
-  "test_rows": 1072,
+  "classification_target_note": "next-hour ChargePoint server-termination proxy derived from the source `Ended By` field; it is not a ground-truth hardware failure label",
+  "features": [
+    "latitude",
+    "longitude",
+    "session_count",
+    "avg_session_minutes",
+    "avg_total_duration_minutes",
+    "avg_power_kw",
+    "energy_kwh",
+    "fee_usd",
+    "level1_share",
+    "level2_share",
+    "dc_fast_share",
+    "hour_sin",
+    "hour_cos",
+    "dow_sin",
+    "dow_cos",
+    "is_weekend",
+    "is_peak_hour"
+  ],
+  "engineered_features": [
+    "hour_sin",
+    "hour_cos",
+    "dow_sin",
+    "dow_cos",
+    "is_weekend",
+    "is_peak_hour"
+  ],
+  "split_time": "2019-02-13T15:00:00",
+  "train_rows": 178820,
+  "test_rows": 56146,
   "regression": {
-    "ridge": {"mae": 4.645382327890011, "rmse": 5.9606496049057265, "r2": 0.7013072828938738},
-    "lasso": {"mae": 4.645121187153869, "rmse": 5.966420930610647, "r2": 0.7007285917712136}
+    "ridge": {
+      "mae": 3.2055558304551424,
+      "rmse": 5.219433747831045,
+      "r2": 0.017715005259016148
+    },
+    "lasso": {
+      "mae": 3.1854267429225778,
+      "rmse": 5.214136230979097,
+      "r2": 0.01970795346184062
+    }
   },
   "classification": {
-    "logistic_regression": {"precision": 0.7931034482758621, "recall": 0.9019607843137255, "f1": 0.8440366972477065, "roc_auc": 0.9921645445641527, "pr_auc": 0.9377914105778544}
+    "logistic_regression": {
+      "precision": 0.01384402399630826,
+      "recall": 0.9259259259259259,
+      "f1": 0.02728016731835955,
+      "positive_rate": 0.011541338652798062,
+      "roc_auc": 0.6247030812810961,
+      "pr_auc": 0.01686826602201398
+    }
   }
 }
