@@ -1,0 +1,32 @@
+{
+  "week": 10,
+  "sealed_test_start": "2026-09-12T04:00:00",
+  "development_rows": 4272,
+  "sealed_test_rows": 1072,
+  "nested_cv": {
+    "regression_outer": [
+      {"outer_fold":1,"best_max_depth":3,"mae":2.634440315768067},
+      {"outer_fold":2,"best_max_depth":3,"mae":3.849170626029539},
+      {"outer_fold":3,"best_max_depth":3,"mae":3.6947575553008236}
+    ],
+    "selected_regression_max_depth": 3,
+    "classification_outer": [
+      {"outer_fold":1,"best_max_depth":4,"pr_auc":0.7712454419081564},
+      {"outer_fold":2,"best_max_depth":4,"pr_auc":0.8887385216995871},
+      {"outer_fold":3,"best_max_depth":3,"pr_auc":0.9033656532940619}
+    ],
+    "selected_classification_max_depth": 4
+  },
+  "sealed_test": {
+    "xgboost_regression": {"mae":3.5977965778130208,"rmse":4.829056648231817,"r2":0.8039521661353145},
+    "ols_reference": {"mae":4.644998421641797,"rmse":5.95965037651938,"r2":0.7014074186994579},
+    "calibrated_xgboost_classification": {"precision":0.975609756097561,"recall":0.7843137254901961,"f1":0.8695652173913043,"roc_auc":0.9785101111943308,"pr_auc":0.9241691712030782,"balanced_accuracy":0.8916671467803576,"mcc":0.8694084121992168,"brier":0.010483337790300275},
+    "logistic_reference": {"precision":0.7931034482758621,"recall":0.9019607843137255,"f1":0.8440366972477065,"roc_auc":0.9921645445641527,"pr_auc":0.9377914105778544,"balanced_accuracy":0.9451038005799773,"mcc":0.8376378300489977,"brier":0.012915344244317952}
+  },
+  "significance_tests": {
+    "regression_paired_bootstrap": {"mean_absolute_error_difference_champion_minus_ols":-1.0472018438287771,"bootstrap_95_ci":[-1.206013156270602,-0.8791482713250569],"two_sided_bootstrap_p_value":0.0},
+    "classification_mcnemar_exact": {"champion_correct_logistic_wrong":11,"champion_wrong_logistic_correct":6,"p_value":0.332305908203125}
+  },
+  "calibration": "sigmoid via CalibratedClassifierCV with TimeSeriesSplit(3)",
+  "imbalance_metric_priority": "PR-AUC plus balanced accuracy/MCC/Brier"
+}
