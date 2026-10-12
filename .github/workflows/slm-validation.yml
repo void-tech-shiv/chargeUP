@@ -60,7 +60,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports data/processed/palo_alto_hourly_sample.csv models/registry/chargeup-paloalto-v2.0.0
+          git add reports data/processed/palo_alto_hourly_sample.csv models/week09_station_segments.json models/registry/chargeup-paloalto-v2.0.0
           git reset -- reports/week03_test_predictions.csv || true
           git diff --cached --quiet && exit 0
           git commit -m "data: record Palo Alto real-data validation [skip ci]"
