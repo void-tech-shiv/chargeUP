@@ -1,99 +1,119 @@
 # ⚡ ChargeUp — EV Charging Demand Forecast & Fault Detection
 
-Machine-learning capstone based on the **ChargeUp** project brief from the
-25SC2107E SLM.
+Machine-learning capstone implemented according to the **ChargeUp** project card in the 25SC2107E SLM.
 
-## What the project does
+## Project goals
 
-ChargeUp solves four connected problems:
+ChargeUp combines four connected tasks:
 
-1. **Predict** next-hour EV charging demand in kWh.
-2. **Classify** whether a charging station is likely to be faulty.
-3. **Segment** stations by usage pattern with K-Means / DBSCAN.
-4. **Deploy** the trained system as a FastAPI service with a dashboard,
-   health endpoint, metrics, PSI drift monitoring, and a retraining trigger.
+1. forecast **next-hour EV charging demand (kWh)**
+2. classify **station fault / normal state**
+3. cluster stations by usage pattern using **K-Means, DBSCAN and PCA**
+4. deploy the champion models with **FastAPI, health/metrics, PSI drift monitoring and a retraining trigger**
 
-The included dataset is **synthetic demo data**, generated only so the project
-runs immediately. Replace it with your real charging-session + telemetry +
-weather + geography data when available.
+The SLM card does not provide a complete downloadable raw dataset, so this repository contains a reproducible synthetic charging-session generator with time, weather, geography, charging and telemetry fields. A real dataset can replace it later without changing the project structure.
 
-## ML models included
+## SLM 12-week implementation
 
-### Regression
-- Linear Regression baseline
-- Ridge Regression
-- Random Forest Regressor
-- XGBoost Regressor
+| Week | SLM work implemented | Main artifacts |
+|---|---|---|
+| 1 | targets + initial EDA | `src/week01_eda.py`, `docs/week01_*` |
+| 2 | ingestion, cleaning, missing values, outliers, leakage checks | `src/week02_cleaning.py`, `reports/week02_data_quality.json` |
+| 3 | OLS + from-scratch Gradient Descent + MLflow hook | `src/week03_linear_regression.py`, `reports/week03_linear_regression_metrics.json` |
+| 4 | Ridge, Lasso, Logistic Regression + engineered time features | `src/week04_regularized_models.py` |
+| 5 | TimeSeriesSplit CV + one-standard-error rule | `src/week05_cv_selection.py` |
+| 6 | interpretable Decision Tree + top splits | `src/week06_decision_tree.py` |
+| 7 | Random Forest + OOB error + permutation importance | `src/week07_random_forest.py` |
+| 8 | XGBoost + early stopping + SHAP | `src/week08_xgboost_shap.py` |
+| 9 | K-Means + DBSCAN + PCA + segment feedback feature | `src/week09_station_clustering.py` |
+| 10 | nested CV + calibration + imbalance metrics + significance tests | `src/week10_nested_validation.py` |
+| 11 | versioned champion package + shared feature module + PSI baseline | `src/week11_package_champion.py`, `models/registry/chargeup-v1.0.0/` |
+| 12 | containerized FastAPI + health/metrics/drift/retraining | `api/main.py`, `Dockerfile`, `scripts/start_production.sh` |
 
-### Classification
-- Logistic Regression
-- Decision Tree
-- Random Forest Classifier
-- XGBoost Classifier
+Detailed completion notes are under `docs/weekXX_completion.md`.
 
-### Unsupervised learning
-- K-Means station segments
-- DBSCAN station segments
-- PCA projection for station structure
+## Verified results
 
-### Evaluation
-- Regression: MAE, RMSE, R²
-- Classification: Precision, Recall, F1, ROC-AUC, PR-AUC
-- Temporal train/test split to reduce time leakage
-- TimeSeriesSplit cross-validation
-- Probability calibration support in the classifier pipeline
-- Feature importance / SHAP export for XGBoost
-- PSI drift guard
+Using the reproducible 5,360-row demo dataset with 16 stations:
 
----
+- Week 3 OLS RMSE: **5.922**, R²: **0.705**
+- Week 8 XGBoost demand RMSE: **5.090**, R²: **0.782**
+- Week 10 nested-validation XGBoost demand RMSE: **4.829**, R²: **0.804**
+- Week 10 Logistic fault PR-AUC: **0.938**
+- Week 10 calibrated XGBoost fault F1: **0.870**
+- Week 9 PCA first two components explain about **78%** of station-level variance
+- local API/unit verification: **4 pytest tests passed**
 
-## Quick start (Windows PowerShell)
+## Quick start — Windows PowerShell
 
 ```powershell
-cd ChargeUp
+git clone https://github.com/void-tech-shiv/chargeUP.git
+cd chargeUP
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 
 python -m src.generate_data
-python -m src.train
+python -m src.week02_cleaning
+python -m src.week11_package_champion
 
 uvicorn api.main:app --reload
 ```
 
-Then open:
+Open:
 
-- Dashboard: http://127.0.0.1:8000
-- Swagger API: http://127.0.0.1:8000/docs
-- Health: http://127.0.0.1:8000/health
-- Metrics: http://127.0.0.1:8000/metrics
+- Dashboard: `http://127.0.0.1:8000`
+- Swagger API: `http://127.0.0.1:8000/docs`
+- Health: `http://127.0.0.1:8000/health`
+- Metrics: `http://127.0.0.1:8000/metrics`
 
-The ZIP already contains generated demo data and trained artifacts, so after
-installing requirements you can normally start directly with:
+## Run the complete SLM pipeline
 
 ```powershell
+python -m src.generate_data
+python -m src.week02_cleaning
+python -m src.week03_linear_regression
+python -m src.week04_regularized_models
+python -m src.week05_cv_selection
+python -m src.week06_decision_tree
+python -m src.week07_random_forest
+python -m src.week08_xgboost_shap
+python -m src.week09_station_clustering
+python -m src.week10_nested_validation
+python -m src.week11_package_champion
+python -m pytest -q
 uvicorn api.main:app --reload
 ```
 
----
+Week 1 is EDA/target definition and is reproducible with:
 
-## Linux / macOS
+```powershell
+python -m src.week01_eda
+```
+
+MLflow is included in `requirements.txt`; Week 3 creates the first MLflow experiment/run automatically when the package is installed.
+
+## Docker
+
+The Docker startup flow creates any missing demo data, performs Week 2 cleaning, builds the Week 11 versioned model package, and then starts FastAPI.
 
 ```bash
-cd ChargeUp
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn api.main:app --reload
+docker build -t chargeup .
+docker run --rm -p 8000:8000 chargeup
 ```
 
----
+## API endpoints
 
-## API examples
+- `POST /predict` — demand forecast + fault alert
+- `POST /predict/demand` — next-hour demand only
+- `POST /predict/fault` — fault probability / flag
+- `GET /health` — service and model health
+- `GET /metrics` — runtime counters + validation/model metadata
+- `POST /drift/check` — PSI drift calculation
+- `POST /retrain/trigger` — records a retraining request
+- `GET /demo/stations` — demo predictions from latest station rows
 
-### Combined demand + fault prediction
-
-`POST /predict`
+Example request:
 
 ```json
 {
@@ -115,91 +135,46 @@ uvicorn api.main:app --reload
 }
 ```
 
-Typical response:
-
-```json
-{
-  "next_hour_demand_kwh": 34.81,
-  "fault_probability": 0.0412,
-  "station_fault_flag": 0,
-  "fault_label": "NORMAL",
-  "station_segment": 2,
-  "model_versions": {
-    "regression": "...",
-    "classification": "..."
-  }
-}
-```
-
-### Drift check
-
-`POST /drift/check`
-
-Send an array of observations. The endpoint calculates feature-level PSI and
-returns an overall drift status.
-
-### Retraining trigger
-
-`POST /retrain/trigger`
-
-Creates a local retraining-request marker. In a production system this would
-normally enqueue a training job.
-
----
-
-## Project structure
+## Repository structure
 
 ```text
 ChargeUp/
 ├── api/
 │   ├── main.py
 │   └── static/
-│       ├── index.html
-│       ├── app.js
-│       └── style.css
 ├── data/
 │   ├── raw/
-│   │   └── chargeup_sessions.csv
 │   └── processed/
+├── docs/
+│   └── week01...week12 documentation
 ├── models/
-│   ├── regression_model.joblib
-│   ├── fault_model.joblib
-│   ├── station_segments.json
-│   ├── station_cluster_models.joblib
-│   ├── baseline_stats.json
-│   ├── training_metrics.json
-│   ├── model_meta.json
-│   └── shap_importance.csv
-├── notebooks/
-│   └── 01_chargeup_walkthrough.ipynb
+│   └── registry/chargeup-v1.0.0/
 ├── reports/
-│   ├── station_segments.csv
-│   └── test_predictions.csv
+│   └── week02...week12 evaluation outputs
 ├── scripts/
 │   ├── run_dev.ps1
-│   └── run_dev.sh
+│   ├── run_dev.sh
+│   └── start_production.sh
 ├── src/
-│   ├── clustering.py
-│   ├── drift.py
-│   ├── features.py
 │   ├── generate_data.py
-│   └── train.py
+│   ├── week01_eda.py
+│   ├── week02_cleaning.py
+│   ├── week03_linear_regression.py
+│   ├── week04_regularized_models.py
+│   ├── week05_cv_selection.py
+│   ├── week06_decision_tree.py
+│   ├── week07_random_forest.py
+│   ├── week08_xgboost_shap.py
+│   ├── week09_station_clustering.py
+│   ├── week10_nested_validation.py
+│   ├── model_features.py
+│   └── week11_package_champion.py
 ├── tests/
 ├── Dockerfile
 ├── requirements.txt
 └── README.md
 ```
 
-## Important note
+## Viva one-liner
 
-The SLM project brief defines the modelling task and deployment expectations,
-but does not provide a complete ready-to-download project dataset in the
-provided project card. For that reason this repository includes a reproducible
-synthetic dataset generator and is structured so a real CSV can replace it.
-
-## Suggested viva one-liner
-
-> ChargeUp forecasts next-hour EV charging demand and flags likely station
-> faults using charging-session, telemetry, weather, location, and time
-> features; it also clusters stations by usage pattern and serves the models
-> through FastAPI with drift monitoring.
+> ChargeUp forecasts next-hour EV charging demand and detects likely charging-station faults from charging, telemetry, weather, geography and time features; it also clusters stations by usage pattern and deploys versioned models through FastAPI with PSI drift monitoring and a retraining trigger.
