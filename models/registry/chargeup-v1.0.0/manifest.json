@@ -16,8 +16,8 @@
     "feature_schema": "feature_schema.json"
   },
   "sha256": {
-    "regression_model.joblib": "1d0fe88c5b84b37ee6f9c9c0b906e1a742e91d6e15c14611003d8aa3ca7344b4",
-    "fault_model.joblib": "6a972e34a2c33037fda61a21a9bed0b4df080a574a694ced75afee570561a016"
+    "regression_model.joblib": "2e55a8ca97b72814f3a6c7aea98e120c0d149a84cd1e1c058b4f4fb9e7c2bdf7",
+    "fault_model.joblib": "689031e343c48354df0bbeb27479662324497d5521d45c19e8bd0cd78405eafa"
   },
   "retraining_trigger": "PSI >= 0.25"
 }
