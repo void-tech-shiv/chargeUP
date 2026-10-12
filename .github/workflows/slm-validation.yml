@@ -14,12 +14,18 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: chargeup-paloalto-main
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -50,11 +56,14 @@ jobs:
             data/processed/palo_alto_hourly_sample.csv
             models/registry/chargeup-paloalto-v2.0.0/
           if-no-files-found: error
-      - name: Commit real-data text reports
+      - name: Commit compact real-data reports
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add reports data/processed/palo_alto_hourly_sample.csv models/registry/chargeup-paloalto-v2.0.0
+          git reset -- reports/week03_test_predictions.csv || true
           git diff --cached --quiet && exit 0
           git commit -m "data: record Palo Alto real-data validation [skip ci]"
-          git push
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
