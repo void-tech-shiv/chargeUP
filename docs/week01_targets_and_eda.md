@@ -1,141 +1,88 @@
-# ChargeUp — SLM Week 1: Problem Definition & Initial EDA
+# ChargeUp — SLM Week 1: Real Dataset, Targets & Initial EDA
 
-This file follows the ChargeUp Week 1 task from the course SLM.
+Week 1 now uses the **City of Palo Alto Electric Vehicle Charging Station Usage (July 2011–Dec 2020)** source instead of the earlier synthetic demo data.
 
-## 1. Problem definition
+Official dataset page: https://data.paloalto.gov/datasets/194693/electric-vehicle-charging-station-usage-july-2011-dec-2020/
 
-ChargeUp has two primary machine-learning targets.
+Source file: `ChargePoint Data CY20Q4.csv`
 
-### Target A — Station fault flag (classification)
+## 1. Source fields used
 
-**Target column:** `station_fault_flag`
+The City ChargePoint CSV provides real charging-session, time and geography fields including:
 
-Goal: predict whether a charging-station observation indicates a fault condition.
+- `Station Name`
+- `Start Date`, `End Date`
+- `Total Duration (hh:mm:ss)`
+- `Charging Time (hh:mm:ss)`
+- `Energy (kWh)`
+- `Port Type`, `Port Number`, `Plug Type`
+- `Latitude`, `Longitude`
+- `Fee`
+- `Ended By`
 
-- `0` = normal
-- `1` = fault
+It does **not** provide weather, voltage, current, or a ground-truth broken-station label. Those fields are not fabricated.
 
-This is a binary classification task.
+## 2. Regression target
 
-### Target B — Next-hour charging demand (regression)
+**Column:** `next_hour_demand_kwh`
 
-**Target column:** `next_hour_demand_kwh`
+For every station-hour observation, the target is the energy delivered at the **same station in the next exact clock hour**. If the station has no charging session in that next hour, the target is `0` kWh.
 
-Goal: forecast the charging demand, in kWh, for the next hour.
+This avoids the common leakage/error of shifting to the next *observed* row even when it occurs many hours later.
 
-This is a supervised regression task.
+## 3. Classification target
 
-## 2. Input groups required by the SLM
+**Column:** `station_fault_flag`
 
-The Week 1 exploratory analysis is organised around the three input groups called out in the ChargeUp brief:
+The source has no verified hardware-failure field. To keep the SLM classification task tied to the real dataset, ChargeUp uses a transparent weak-supervision proxy:
 
-### Charging / station usage data
+- `1` = the next exact hour at the same station contains at least one session whose source `Ended By` value includes `Server` (for example `CPS Server`)
+- `0` = no such server-ended session in the next exact hour
+
+This is a **next-hour server-termination risk proxy**, not proof that a charging station is physically broken.
+
+The source `Ended By` field and any derived current/future server-termination count are excluded from model inputs so the label is not leaked into the features.
+
+## 4. Input groups used by the real-data model
+
+### Charging / usage
 - `session_count`
 - `avg_session_minutes`
+- `avg_total_duration_minutes`
 - `avg_power_kw`
-- `connector_errors`
-- `voltage_v`
-- `current_a`
-- `availability_pct`
 - `energy_kwh`
+- `fee_usd`
+- `level1_share`
+- `level2_share`
+- `dc_fast_share`
 
-### Time data
-- `timestamp`
-
-### Weather data
-- `temperature_c`
-- `humidity_pct`
-- `rainfall_mm`
+### Time
+- station-hour `timestamp`
+- later cyclic hour/day-of-week features
 
 ### Geography
 - `station_id`
 - `latitude`
 - `longitude`
 
-## 3. Dataset snapshot used for the initial EDA
+### Weather
+The supplied City dataset has no weather columns. Weather is therefore documented as unavailable in this source rather than filled with synthetic values.
 
-The repository currently contains a synthetic/demo ChargeUp dataset so that the complete project can be reproduced without a proprietary charging-station source.
+## 5. Initial EDA workflow
 
-- Rows: **5,360**
-- Charging stations: **16**
-- Time range: **2026-09-01 00:00:00 to 2026-09-14 22:00:00**
-- Total missing values in the generated dataset: **0**
+`python -m src.palo_alto_data --download` produces:
 
-## 4. Initial EDA — demand target
+- `data/processed/chargeup_sessions_clean.csv`
+- `data/processed/palo_alto_hourly_sample.csv`
+- `reports/palo_alto_data_quality.json`
 
-For `next_hour_demand_kwh`:
+The quality report records the actual downloaded row count, valid-session count, station count, time range, server-ended-session count and resulting classification positive rate. These generated values are the authoritative Week 1/2 dataset statistics.
 
-- Mean: **22.02 kWh**
-- Median: **20.25 kWh**
-- Standard deviation: **10.06 kWh**
-- Minimum: **0.20 kWh**
-- Maximum: **59.21 kWh**
+## 6. Week 1 checklist
 
-### Early relationships seen in the demo data
-
-Correlation with next-hour demand:
-
-| Feature | Correlation |
-|---|---:|
-| `energy_kwh` | 0.830 |
-| `session_count` | 0.599 |
-| `temperature_c` | 0.385 |
-| `rainfall_mm` | 0.033 |
-| `availability_pct` | 0.009 |
-| `connector_errors` | 0.002 |
-| `humidity_pct` | -0.180 |
-
-This is **exploratory only**. It is not model selection and does not replace later cross-validation.
-
-### Time pattern
-
-The highest mean next-hour demand in the current demo data occurs around the late afternoon / evening. The top observed hours are:
-
-- 17:00
-- 18:00
-- 16:00
-- 08:00
-- 15:00
-
-This confirms that time-derived features should be considered in later weeks.
-
-## 5. Initial EDA — fault target
-
-Observed fault rate:
-
-- **3.94%**
-
-This immediately indicates an imbalanced classification problem, which will matter later when the SLM reaches imbalance-aware evaluation.
-
-In the current demo data:
-
-- Normal observations have mean connector errors of about **0.17**
-- Fault observations have mean connector errors of about **3.16**
-- Normal observations have mean availability of about **98.98%**
-- Fault observations have mean availability of about **85.33%**
-
-These are exploratory observations only and are not treated as final causal conclusions.
-
-## 6. Geography check
-
-Current generated station coordinates span approximately:
-
-- Latitude: **16.415 to 16.574**
-- Longitude: **80.530 to 80.710**
-
-The station ID plus latitude/longitude fields provide the geography inputs required for later station-level analysis and clustering.
-
-## 7. Week 1 completion checklist
-
-- [x] Define the station-fault classification target.
-- [x] Define the next-hour charging-demand regression target.
-- [x] Identify charging / station usage inputs.
-- [x] Identify time inputs.
-- [x] Identify weather inputs.
-- [x] Identify geography inputs.
-- [x] Perform an initial EDA on both targets.
-- [x] Record early class-imbalance, demand, time, weather, and geography observations.
-
-## 8. Important note
-
-Week 1 is only for problem definition and initial EDA. Data cleaning, leakage-safe preparation, model fitting, regularisation, tree models, boosting, clustering, calibration, deployment, drift monitoring, and retraining belong to later SLM weeks and should not be counted as Week 1 work.
+- [x] Use the instructor-linked Palo Alto dataset family.
+- [x] Identify real source charging/time/geography columns.
+- [x] Define next-exact-hour demand regression target.
+- [x] Define a transparent server-termination proxy for the missing fault label.
+- [x] Document source limitations instead of fabricating absent telemetry/weather.
+- [x] Keep target-generating `Ended By` information out of model features.
