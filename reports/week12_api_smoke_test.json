@@ -1,0 +1,9 @@
+{
+  "week": 12,
+  "health": {"status_code":200,"body":{"status":"ok","service":"ChargeUp","version":"chargeup-v1.0.0","models_loaded":true}},
+  "predict": {"status_code":200,"body":{"station_id":"CHG-001","next_hour_demand_kwh":30.353,"fault_probability":0.0003,"station_fault_flag":0,"fault_label":"NORMAL","station_segment":2,"model_version":"chargeup-v1.0.0"}},
+  "predict_demand": {"status_code":200},
+  "predict_fault": {"status_code":200},
+  "drift_check": {"status_code":200,"retrain_recommended":true,"note":"Repeated identical observations intentionally trigger high PSI in this smoke-test payload."},
+  "pytest": "4 passed"
+}
