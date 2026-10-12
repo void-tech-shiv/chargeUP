@@ -1,0 +1,15 @@
+{
+  "week": 5,
+  "cv": "TimeSeriesSplit(n_splits=5)",
+  "sealed_holdout_starts": "2026-09-12T04:00:00",
+  "regression_candidates": [
+    {"name":"linear","complexity_rank":0,"fold_mae":[3.8699231040924085,3.4832538501086834,4.276926193138293,4.331119955007549,4.342459344602099],"mean_mae":4.060736489389806,"se_mae":0.16868742103592527},
+    {"name":"ridge_a1","complexity_rank":1,"fold_mae":[3.8710557521827083,3.48289588086608,4.277603959223493,4.3314174188465415,4.342941618223419],"mean_mae":4.061182925868448,"se_mae":0.1687923212386265},
+    {"name":"ridge_a10","complexity_rank":2,"fold_mae":[3.8821548001129726,3.4800929911288065,4.283797255917813,4.3340924489448565,4.347438014343381],"mean_mae":4.065515102089566,"se_mae":0.1696469078291875},
+    {"name":"lasso_a0.02","complexity_rank":3,"fold_mae":[4.6191450447060705,3.4640258563007826,4.27058819412203,4.314650530728785,4.339241937283476],"mean_mae":4.201530312628228,"se_mae":0.19427358979748202},
+    {"name":"lasso_a0.10","complexity_rank":4,"fold_mae":[4.274830018874492,3.455845923241506,4.26188041141682,4.290568978412885,4.354402519714248],"mean_mae":4.127505570331991,"se_mae":0.16866530071098956}
+  ],
+  "one_standard_error_rule": {"best_mean_model":"linear","threshold_mae":4.229423910425732,"eligible_models":["linear","ridge_a1","ridge_a10","lasso_a0.02","lasso_a0.10"],"selected_simplest_model":"linear"},
+  "logistic_regression_baseline": {"fold_pr_auc":[0.9353729249019125,0.7684013739643761,0.9042431657135429,0.9448473624123592,0.923379208201],"mean_pr_auc":0.8952488070386382,"se_pr_auc":0.032428730135886936},
+  "milestone": "linear/logistic baseline selection complete"
+}
