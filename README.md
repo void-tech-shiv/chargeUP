@@ -1,50 +1,44 @@
-# ⚡ ChargeUp — EV Charging Demand Forecast & Fault Detection
+# ⚡ ChargeUp — Palo Alto EV Charging Demand & Fault-Proxy Forecasting
 
-Machine-learning capstone implemented according to the **ChargeUp** project card in the 25SC2107E SLM.
+ChargeUp is the 25SC2107E SLM capstone implemented with the **real City of Palo Alto Electric Vehicle Charging Station Usage (July 2011–Dec 2020) dataset**.
 
-## Project goals
+Official dataset page:
+https://data.paloalto.gov/datasets/194693/electric-vehicle-charging-station-usage-july-2011-dec-2020/
 
-ChargeUp combines four connected tasks:
+The old `data.cityofpaloalto.org` link can return 404. `src/palo_alto_data.py` first tries the current City download endpoint and then uses a public research mirror of the same `ChargePoint Data CY20Q4.csv` file if needed.
 
-1. forecast **next-hour EV charging demand (kWh)**
-2. classify **station fault / normal state**
-3. cluster stations by usage pattern using **K-Means, DBSCAN and PCA**
-4. deploy the champion models with **FastAPI, health/metrics, PSI drift monitoring and a retraining trigger**
+## What the real-data project does
 
-The SLM card does not provide a complete downloadable raw dataset, so this repository contains a reproducible synthetic charging-session generator with time, weather, geography, charging and telemetry fields. A real dataset can replace it later without changing the project structure.
+1. Aggregates ChargePoint sessions into **station-hour** observations.
+2. Forecasts the station's **next exact-hour charging demand (kWh)**.
+3. Predicts a **next-hour ChargePoint server-termination proxy** for the SLM fault-classification task.
+4. Segments stations with K-Means / DBSCAN and PCA.
+5. Runs OLS, gradient descent, Ridge, Lasso, Logistic Regression, Decision Tree, Random Forest and XGBoost.
+6. Uses temporal CV, one-standard-error selection, nested CV, calibration, imbalance-aware metrics, significance tests and SHAP.
+7. Packages a versioned `chargeup-paloalto-v2.0.0` model and serves it through FastAPI with health, metrics, PSI drift and retraining endpoints.
 
-## SLM 12-week implementation
+## Important label note
 
-| Week | SLM work implemented | Main artifacts |
-|---|---|---|
-| 1 | targets + initial EDA | `src/week01_eda.py`, `docs/week01_*` |
-| 2 | ingestion, cleaning, missing values, outliers, leakage checks | `src/week02_cleaning.py`, `reports/week02_data_quality.json` |
-| 3 | OLS + from-scratch Gradient Descent + MLflow hook | `src/week03_linear_regression.py`, `reports/week03_linear_regression_metrics.json` |
-| 4 | Ridge, Lasso, Logistic Regression + engineered time features | `src/week04_regularized_models.py` |
-| 5 | TimeSeriesSplit CV + one-standard-error rule | `src/week05_cv_selection.py` |
-| 6 | interpretable Decision Tree + top splits | `src/week06_decision_tree.py` |
-| 7 | Random Forest + OOB error + permutation importance | `src/week07_random_forest.py` |
-| 8 | XGBoost + early stopping + SHAP | `src/week08_xgboost_shap.py` |
-| 9 | K-Means + DBSCAN + PCA + segment feedback feature | `src/week09_station_clustering.py` |
-| 10 | nested CV + calibration + imbalance metrics + significance tests | `src/week10_nested_validation.py` |
-| 11 | versioned champion package + shared feature module + PSI baseline | `src/week11_package_champion.py`, `models/registry/chargeup-v1.0.0/` |
-| 12 | containerized FastAPI + health/metrics/drift/retraining | `api/main.py`, `Dockerfile`, `scripts/start_production.sh` |
+The provided City CSV **does not contain a ground-truth hardware-failure / broken-station label**. It does contain `Ended By`, including records such as `CPS Server`. To avoid inventing fault labels, ChargeUp defines `station_fault_flag` as a transparent weak-supervision target: **whether the next exact hour at the same station contains a server-ended charging session**. This is a server-termination risk proxy, not proof of broken hardware.
 
-Detailed completion notes are under `docs/weekXX_completion.md`.
+The City CSV also does **not** contain weather, voltage, current or hardware-availability telemetry. Those values are not fabricated. The real-data model uses charging-session, time, port, fee and geography features available in the source.
 
-## Verified results
+## Real source columns used
 
-Using the reproducible 5,360-row demo dataset with 16 stations:
+- Station Name
+- Start Date / End Date
+- Total Duration / Charging Time
+- Energy (kWh)
+- Port Type / Port Number
+- Latitude / Longitude
+- Fee
+- Ended By
 
-- Week 3 OLS RMSE: **5.922**, R²: **0.705**
-- Week 8 XGBoost demand RMSE: **5.090**, R²: **0.782**
-- Week 10 nested-validation XGBoost demand RMSE: **4.829**, R²: **0.804**
-- Week 10 Logistic fault PR-AUC: **0.938**
-- Week 10 calibrated XGBoost fault F1: **0.870**
-- Week 9 PCA first two components explain about **78%** of station-level variance
-- local API/unit verification: **4 pytest tests passed**
+The preprocessing script derives station-hour features such as session count, average charging duration, average power, hourly energy, fee totals and port-type shares.
 
-## Quick start — Windows PowerShell
+## One-command run
+
+### Windows PowerShell
 
 ```powershell
 git clone https://github.com/void-tech-shiv/chargeUP.git
@@ -52,26 +46,24 @@ cd chargeUP
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-
-python -m src.generate_data
-python -m src.week02_cleaning
-python -m src.week11_package_champion
-
+python -m src.run_palo_alto_pipeline
 uvicorn api.main:app --reload
 ```
 
-Open:
+### Faster real-data demo
 
-- Dashboard: `http://127.0.0.1:8000`
-- Swagger API: `http://127.0.0.1:8000/docs`
-- Health: `http://127.0.0.1:8000/health`
-- Metrics: `http://127.0.0.1:8000/metrics`
-
-## Run the complete SLM pipeline
+The official portal export is capped at 10,000 rows. For a faster demo using real Palo Alto rows:
 
 ```powershell
-python -m src.generate_data
-python -m src.week02_cleaning
+python -m src.run_palo_alto_pipeline --export-only --no-mlflow
+```
+
+For the full project, run without `--export-only`.
+
+## Manual SLM sequence
+
+```bash
+python -m src.palo_alto_data --download
 python -m src.week03_linear_regression
 python -m src.week04_regularized_models
 python -m src.week05_cv_selection
@@ -82,99 +74,72 @@ python -m src.week09_station_clustering
 python -m src.week10_nested_validation
 python -m src.week11_package_champion
 python -m pytest -q
+```
+
+## FastAPI
+
+After Week 11 artifacts exist:
+
+```bash
 uvicorn api.main:app --reload
 ```
 
-Week 1 is EDA/target definition and is reproducible with:
+Open:
 
-```powershell
-python -m src.week01_eda
-```
+- Dashboard: `http://127.0.0.1:8000`
+- Swagger: `http://127.0.0.1:8000/docs`
+- Health: `http://127.0.0.1:8000/health`
+- Metrics: `http://127.0.0.1:8000/metrics`
 
-MLflow is included in `requirements.txt`; Week 3 creates the first MLflow experiment/run automatically when the package is installed.
+Main endpoints:
 
-## Docker
+- `POST /predict`
+- `POST /predict/demand`
+- `POST /predict/fault`
+- `POST /drift/check`
+- `POST /retrain/trigger`
 
-The Docker startup flow creates any missing demo data, performs Week 2 cleaning, builds the Week 11 versioned model package, and then starts FastAPI.
-
-```bash
-docker build -t chargeup .
-docker run --rm -p 8000:8000 chargeup
-```
-
-## API endpoints
-
-- `POST /predict` — demand forecast + fault alert
-- `POST /predict/demand` — next-hour demand only
-- `POST /predict/fault` — fault probability / flag
-- `GET /health` — service and model health
-- `GET /metrics` — runtime counters + validation/model metadata
-- `POST /drift/check` — PSI drift calculation
-- `POST /retrain/trigger` — records a retraining request
-- `GET /demo/stations` — demo predictions from latest station rows
-
-Example request:
+Example input:
 
 ```json
 {
-  "station_id": "CHG-001",
-  "timestamp": "2026-10-13T18:00:00",
-  "temperature_c": 31.0,
-  "humidity_pct": 64.0,
-  "rainfall_mm": 0.0,
-  "latitude": 16.5062,
-  "longitude": 80.6480,
-  "session_count": 7,
-  "avg_session_minutes": 43.0,
-  "avg_power_kw": 7.2,
-  "connector_errors": 0,
-  "voltage_v": 230.0,
-  "current_a": 28.0,
-  "availability_pct": 99.0,
-  "energy_kwh": 31.5
+  "station_id": "PALO ALTO CA / HAMILTON #1",
+  "timestamp": "2020-12-01T18:00:00",
+  "latitude": 37.444572,
+  "longitude": -122.160309,
+  "session_count": 2,
+  "avg_session_minutes": 75.0,
+  "avg_total_duration_minutes": 110.0,
+  "avg_power_kw": 6.1,
+  "energy_kwh": 14.2,
+  "fee_usd": 0.0,
+  "level1_share": 0.0,
+  "level2_share": 1.0,
+  "dc_fast_share": 0.0
 }
 ```
 
-## Repository structure
+## SLM mapping
 
-```text
-ChargeUp/
-├── api/
-│   ├── main.py
-│   └── static/
-├── data/
-│   ├── raw/
-│   └── processed/
-├── docs/
-│   └── week01...week12 documentation
-├── models/
-│   └── registry/chargeup-v1.0.0/
-├── reports/
-│   └── week02...week12 evaluation outputs
-├── scripts/
-│   ├── run_dev.ps1
-│   ├── run_dev.sh
-│   └── start_production.sh
-├── src/
-│   ├── generate_data.py
-│   ├── week01_eda.py
-│   ├── week02_cleaning.py
-│   ├── week03_linear_regression.py
-│   ├── week04_regularized_models.py
-│   ├── week05_cv_selection.py
-│   ├── week06_decision_tree.py
-│   ├── week07_random_forest.py
-│   ├── week08_xgboost_shap.py
-│   ├── week09_station_clustering.py
-│   ├── week10_nested_validation.py
-│   ├── model_features.py
-│   └── week11_package_champion.py
-├── tests/
-├── Dockerfile
-├── requirements.txt
-└── README.md
-```
+| Week | Deliverable |
+|---|---|
+| 1 | Real source / targets / initial EDA |
+| 2 | Palo Alto ingestion, cleaning, hourly aggregation, leakage-safe targets |
+| 3 | OLS + from-scratch Gradient Descent + MLflow |
+| 4 | Ridge + Lasso + Logistic Regression + time feature engineering |
+| 5 | Time-series CV + one-standard-error rule |
+| 6 | Interpretable Decision Tree |
+| 7 | Random Forest + OOB + permutation importance |
+| 8 | XGBoost + early stopping + SHAP |
+| 9 | K-Means + DBSCAN + PCA + segment feedback |
+| 10 | Nested CV + calibration + imbalance metrics + significance tests |
+| 11 | Versioned champion + shared features + PSI baseline |
+| 12 | FastAPI + Docker + health/metrics/drift/retraining |
+
+## Data policy
+
+The full City CSV and generated full station-hour table are intentionally not committed to Git because they are reproducibly downloadable/generated. Small samples and validation reports are committed. Binary `.joblib` artifacts are regenerated by Week 11.
 
 ## Viva one-liner
 
-> ChargeUp forecasts next-hour EV charging demand and detects likely charging-station faults from charging, telemetry, weather, geography and time features; it also clusters stations by usage pattern and deploys versioned models through FastAPI with PSI drift monitoring and a retraining trigger.
+> ChargeUp uses the City of Palo Alto's real ChargePoint sessions to forecast next-hour station demand and next-hour server-termination risk, clusters stations by usage pattern, and deploys the versioned models through FastAPI with drift monitoring.
