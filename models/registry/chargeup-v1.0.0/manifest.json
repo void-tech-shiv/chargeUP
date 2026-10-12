@@ -1,0 +1,23 @@
+{
+  "version": "chargeup-v1.0.0",
+  "slm_week": 11,
+  "regression_champion": "xgboost_max_depth_3",
+  "classification_champion": "calibrated_logistic_regression",
+  "feature_count": 20,
+  "sealed_test_metrics": {
+    "regression": {"mae":3.5977965778130208,"rmse":4.829056648231817,"r2":0.8039521661353145},
+    "classification": {"precision":0.7931034482758621,"recall":0.9019607843137255,"f1":0.8440366972477065,"roc_auc":0.9921645445641527,"pr_auc":0.9377914105778544,"balanced_accuracy":0.9451038005799773,"mcc":0.8376378300489977,"brier":0.012915344244317952}
+  },
+  "psi_baseline": "baseline_stats.json",
+  "artifacts": {
+    "regression_model": "regression_model.joblib",
+    "fault_model": "fault_model.joblib",
+    "station_segments": "station_segments.json",
+    "feature_schema": "feature_schema.json"
+  },
+  "sha256": {
+    "regression_model.joblib": "1d0fe88c5b84b37ee6f9c9c0b906e1a742e91d6e15c14611003d8aa3ca7344b4",
+    "fault_model.joblib": "6a972e34a2c33037fda61a21a9bed0b4df080a574a694ced75afee570561a016"
+  },
+  "retraining_trigger": "PSI >= 0.25"
+}
