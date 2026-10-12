@@ -17,7 +17,7 @@
   },
   "sha256": {
     "regression_model.joblib": "2e55a8ca97b72814f3a6c7aea98e120c0d149a84cd1e1c058b4f4fb9e7c2bdf7",
-    "fault_model.joblib": "689031e343c48354df0bbeb27479662324497d5521d45c19e8bd0cd78405eafa"
+    "fault_model.joblib": "9de47d54bc48b54b8ba1f403ed720a711e62a651627302cf1d485108c78ee13f"
   },
   "retraining_trigger": "PSI >= 0.25"
 }
