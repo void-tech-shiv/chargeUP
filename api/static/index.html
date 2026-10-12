@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ChargeUp — EV Charging Intelligence</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">EV • MACHINE LEARNING • SUSTAINABILITY</div>
+      <h1>⚡ ChargeUp</h1>
+      <p>Next-hour charging-demand forecast + broken-station alerting.</p>
+    </div>
+    <div id="health" class="pill">Checking API…</div>
+  </header>
+
+  <main>
+    <section class="hero-grid">
+      <article class="card metric">
+        <span>Regression target</span>
+        <strong>Next-hour demand</strong>
+        <small>kWh</small>
+      </article>
+      <article class="card metric">
+        <span>Classification target</span>
+        <strong>Station fault</strong>
+        <small>normal / fault</small>
+      </article>
+      <article class="card metric">
+        <span>Station intelligence</span>
+        <strong>K-Means + DBSCAN</strong>
+        <small>usage segments</small>
+      </article>
+      <article class="card metric">
+        <span>Production guard</span>
+        <strong>PSI drift</strong>
+        <small>retraining trigger</small>
+      </article>
+    </section>
+
+    <section class="section-head">
+      <div>
+        <div class="eyebrow">LIVE DEMO</div>
+        <h2>Station predictions</h2>
+      </div>
+      <button id="refreshBtn">Refresh</button>
+    </section>
+
+    <section class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Station</th>
+            <th>Segment</th>
+            <th>Next hour</th>
+            <th>Fault probability</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="stationRows"></tbody>
+      </table>
+    </section>
+
+    <section class="split">
+      <article class="card">
+        <div class="eyebrow">PREDICT</div>
+        <h2>Try a station observation</h2>
+        <form id="predictForm" class="form-grid">
+          <label>Station ID<input name="station_id" value="CHG-001"></label>
+          <label>Temperature °C<input name="temperature_c" type="number" step="0.1" value="31"></label>
+          <label>Humidity %<input name="humidity_pct" type="number" step="0.1" value="64"></label>
+          <label>Rainfall mm<input name="rainfall_mm" type="number" step="0.1" value="0"></label>
+          <label>Sessions<input name="session_count" type="number" value="7"></label>
+          <label>Avg session min<input name="avg_session_minutes" type="number" step="0.1" value="43"></label>
+          <label>Avg power kW<input name="avg_power_kw" type="number" step="0.1" value="7.2"></label>
+          <label>Connector errors<input name="connector_errors" type="number" value="0"></label>
+          <label>Voltage V<input name="voltage_v" type="number" step="0.1" value="230"></label>
+          <label>Current A<input name="current_a" type="number" step="0.1" value="28"></label>
+          <label>Availability %<input name="availability_pct" type="number" step="0.1" value="99"></label>
+          <label>Current energy kWh<input name="energy_kwh" type="number" step="0.1" value="31.5"></label>
+          <button type="submit" class="primary">Run ML prediction</button>
+        </form>
+      </article>
+
+      <article class="card result-card">
+        <div class="eyebrow">MODEL OUTPUT</div>
+        <h2 id="resultTitle">Waiting for prediction</h2>
+        <div class="big-number" id="demandOut">—</div>
+        <div class="muted">predicted next-hour demand (kWh)</div>
+        <div class="prob-row">
+          <span>Fault probability</span>
+          <strong id="faultProb">—</strong>
+        </div>
+        <div class="bar"><div id="faultBar"></div></div>
+        <div id="faultStatus" class="status neutral">NO RESULT</div>
+      </article>
+    </section>
+
+    <section class="card architecture">
+      <div class="eyebrow">PIPELINE</div>
+      <h2>How ChargeUp works</h2>
+      <div class="flow">
+        <span>Session logs</span><b>→</b>
+        <span>Telemetry</span><b>→</b>
+        <span>Weather + geo</span><b>→</b>
+        <span>Feature engineering</span><b>→</b>
+        <span>Regression + classifier</span><b>→</b>
+        <span>FastAPI</span>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    ChargeUp capstone • FastAPI + scikit-learn + XGBoost
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
