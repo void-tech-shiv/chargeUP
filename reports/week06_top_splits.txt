@@ -1,0 +1,28 @@
+|--- availability_pct <= 92.42
+|   |--- energy_kwh <= 16.98
+|   |   |--- humidity_pct <= 76.66
+|   |   |   |--- class: 1
+|   |   |--- humidity_pct >  76.66
+|   |   |   |--- class: 1
+|   |--- energy_kwh >  16.98
+|   |   |--- class: 1
+|--- availability_pct >  92.42
+|   |--- energy_kwh <= 9.65
+|   |   |--- avg_power_kw <= 33.28
+|   |   |   |--- energy_kwh <= 7.48
+|   |   |   |   |--- truncated branch of depth 2
+|   |   |   |--- energy_kwh >  7.48
+|   |   |   |   |--- truncated branch of depth 2
+|   |   |--- avg_power_kw >  33.28
+|   |   |   |--- hour_cos <= 0.38
+|   |   |   |   |--- class: 0
+|   |   |   |--- hour_cos >  0.38
+|   |   |   |   |--- class: 0
+|   |--- energy_kwh >  9.65
+|   |   |--- energy_kwh <= 18.74
+|   |   |   |--- session_count <= 6.50
+|   |   |   |   |--- truncated branch of depth 2
+|   |   |   |--- session_count >  6.50
+|   |   |   |   |--- truncated branch of depth 2
+|   |   |--- energy_kwh >  18.74
+|   |   |   |--- class: 0
