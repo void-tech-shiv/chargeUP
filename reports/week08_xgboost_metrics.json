@@ -1,0 +1,23 @@
+{
+  "week": 8,
+  "train_end": "2026-09-10T18:00:00",
+  "sealed_test_start": "2026-09-12T04:00:00",
+  "train_rows": 3728,
+  "validation_rows": 528,
+  "test_rows": 1072,
+  "regression": {"best_iteration":196,"metrics":{"mae":3.813187936345143,"rmse":5.09044582664231,"r2":0.7821542517782801}},
+  "classification": {"best_iteration":22,"scale_pos_weight":25.62857142857143,"metrics":{"precision":0.7857142857142857,"recall":0.8627450980392157,"f1":0.822429906542056,"roc_auc":0.9816404524591423,"pr_auc":0.9143873483566362}},
+  "shap_file": "reports/week08_shap_importance.csv",
+  "top_shap": [
+    {"feature":"energy_kwh","regression_mean_abs_shap":5.32064151763916,"classification_mean_abs_shap":0.4074297547340393},
+    {"feature":"hour_cos","regression_mean_abs_shap":2.4752840995788574,"classification_mean_abs_shap":0.02215859293937683},
+    {"feature":"latitude","regression_mean_abs_shap":0.9712962508201599,"classification_mean_abs_shap":0.002780747599899769},
+    {"feature":"hour_sin","regression_mean_abs_shap":0.5944429636001587,"classification_mean_abs_shap":0.002728226827457547},
+    {"feature":"dow_sin","regression_mean_abs_shap":0.5828403830528259,"classification_mean_abs_shap":0.0058461870066821575},
+    {"feature":"temperature_c","regression_mean_abs_shap":0.3298032879829407,"classification_mean_abs_shap":0.0005685709766112268},
+    {"feature":"longitude","regression_mean_abs_shap":0.26614585518836975,"classification_mean_abs_shap":0.00088127312483266},
+    {"feature":"current_a","regression_mean_abs_shap":0.18426010012626648,"classification_mean_abs_shap":0.0035094665363430977},
+    {"feature":"session_count","regression_mean_abs_shap":0.16015484929084778,"classification_mean_abs_shap":0.05332386493682861},
+    {"feature":"availability_pct","regression_mean_abs_shap":0.14366844296455383,"classification_mean_abs_shap":0.3289681077003479}
+  ]
+}
