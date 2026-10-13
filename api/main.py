@@ -16,6 +16,10 @@ ROOT=Path(__file__).resolve().parents[1]
 VERSION='chargeup-paloalto-v2.0.0'
 MODELS=ROOT/'models'/'registry'/VERSION
 DATA=ROOT/'data'/'processed'/'chargeup_sessions_clean.csv'
+REPORTS=ROOT/'reports'
+CLUSTER_REPORT=REPORTS/'week09_station_segments.csv'
+SHAP_REPORT=REPORTS/'week08_shap_importance.csv'
+PERMUTATION_REPORT=REPORTS/'week07_permutation_importance.csv'
 STATIC=ROOT/'api'/'static'
 app=FastAPI(title='ChargeUp API',version='2.0.0',description='Palo Alto next-hour EV charging demand + server-termination proxy forecasting.')
 app.mount('/static',StaticFiles(directory=STATIC),name='static')
@@ -46,10 +50,23 @@ class ChargeUpInput(BaseModel):
     level2_share:float=1.0
     dc_fast_share:float=0.0
 
+def _row_to_input(r)->ChargeUpInput:
+    return ChargeUpInput(
+        station_id=str(r.station_id),
+        timestamp=pd.Timestamp(r.timestamp).to_pydatetime(),
+        latitude=float(r.latitude),longitude=float(r.longitude),
+        session_count=int(r.session_count),
+        avg_session_minutes=float(r.avg_session_minutes),
+        avg_total_duration_minutes=float(r.avg_total_duration_minutes),
+        avg_power_kw=float(r.avg_power_kw),energy_kwh=float(r.energy_kwh),
+        fee_usd=float(r.fee_usd),level1_share=float(r.level1_share),
+        level2_share=float(r.level2_share),dc_fast_share=float(r.dc_fast_share),
+    )
+
 def predict_one(item:ChargeUpInput)->dict:
     X=build_model_features(pd.DataFrame([item.model_dump()]),station_segments)
     demand=max(0.0,float(reg_model.predict(X)[0])); prob=float(fault_model.predict_proba(X)[0,1]); flag=int(prob>=.5); _runtime['prediction_requests']+=1
-    return {'station_id':item.station_id,'next_hour_demand_kwh':round(demand,3),'fault_probability':round(prob,4),'station_fault_flag':flag,'fault_label':'SERVER_TERMINATION_RISK' if flag else 'NORMAL','classification_target_note':model_meta.get('classification_target_note'),'station_segment':int(station_segments.get(item.station_id,-1)),'model_version':VERSION}
+    return {'station_id':item.station_id,'prediction_timestamp':item.timestamp.isoformat(),'next_hour_demand_kwh':round(demand,3),'fault_probability':round(prob,4),'station_fault_flag':flag,'fault_label':'SERVER_TERMINATION_RISK' if flag else 'NORMAL','classification_target_note':model_meta.get('classification_target_note'),'station_segment':int(station_segments.get(item.station_id,-1)),'model_version':VERSION}
 
 @app.get('/')
 def dashboard(): return FileResponse(STATIC/'index.html')
@@ -61,22 +78,54 @@ def metrics(): return {'runtime':_runtime,'model_meta':model_meta}
 def predict(item:ChargeUpInput): return predict_one(item)
 @app.post('/predict/demand')
 def predict_demand(item:ChargeUpInput):
-    r=predict_one(item); return {'station_id':r['station_id'],'next_hour_demand_kwh':r['next_hour_demand_kwh'],'station_segment':r['station_segment']}
+    r=predict_one(item); return {'station_id':r['station_id'],'prediction_timestamp':r['prediction_timestamp'],'next_hour_demand_kwh':r['next_hour_demand_kwh'],'station_segment':r['station_segment']}
 @app.post('/predict/fault')
 def predict_fault(item:ChargeUpInput):
-    r=predict_one(item); return {'station_id':r['station_id'],'fault_probability':r['fault_probability'],'station_fault_flag':r['station_fault_flag'],'fault_label':r['fault_label'],'classification_target_note':r['classification_target_note']}
+    r=predict_one(item); return {'station_id':r['station_id'],'prediction_timestamp':r['prediction_timestamp'],'fault_probability':r['fault_probability'],'station_fault_flag':r['station_fault_flag'],'fault_label':r['fault_label'],'classification_target_note':r['classification_target_note']}
 @app.post('/drift/check')
 def drift_check(items:List[ChargeUpInput]):
     if not items: raise HTTPException(status_code=400,detail='Provide at least one observation.')
     X=build_model_features(pd.DataFrame([i.model_dump() for i in items]),station_segments); _runtime['drift_checks']+=1; return check_drift(X,baseline_stats)
+@app.post('/drift/demo')
+def drift_demo(limit:int=250):
+    if not DATA.exists(): raise HTTPException(status_code=404,detail='Processed Palo Alto data not found. Run the real-data pipeline first.')
+    limit=max(25,min(int(limit),2000))
+    df=pd.read_csv(DATA,parse_dates=['timestamp']).tail(limit).copy()
+    X=build_model_features(df,station_segments)
+    _runtime['drift_checks']+=1
+    result=check_drift(X,baseline_stats)
+    return {'source':'latest real Palo Alto station-hour observations','observations':int(len(df)),**result}
 @app.post('/retrain/trigger')
 def retrain_trigger():
-    flag=MODELS/'retrain_requested.flag'; flag.write_text(datetime.now(timezone.utc).isoformat(),encoding='utf-8'); _runtime['retrain_requests']+=1; return {'status':'queued','message':'Retraining request recorded.','next_step':'Run the Palo Alto SLM pipeline to rebuild v2 artifacts.'}
+    flag=MODELS/'retrain_requested.flag'; flag.write_text(datetime.now(timezone.utc).isoformat(),encoding='utf-8'); _runtime['retrain_requests']+=1; return {'status':'queued','message':'Retraining request recorded.','flag_file':str(flag.relative_to(ROOT)),'next_step':'Run the Palo Alto SLM pipeline to rebuild v2 artifacts.'}
 @app.get('/demo/stations')
 def demo_stations(limit:int=8):
     if not DATA.exists(): return []
     df=pd.read_csv(DATA,parse_dates=['timestamp']); latest=df.sort_values('timestamp').groupby('station_id',as_index=False).tail(1).head(max(1,min(limit,20)))
-    out=[]
-    for _,r in latest.iterrows():
-        item=ChargeUpInput(station_id=str(r.station_id),timestamp=pd.Timestamp(r.timestamp).to_pydatetime(),latitude=float(r.latitude),longitude=float(r.longitude),session_count=int(r.session_count),avg_session_minutes=float(r.avg_session_minutes),avg_total_duration_minutes=float(r.avg_total_duration_minutes),avg_power_kw=float(r.avg_power_kw),energy_kwh=float(r.energy_kwh),fee_usd=float(r.fee_usd),level1_share=float(r.level1_share),level2_share=float(r.level2_share),dc_fast_share=float(r.dc_fast_share)); out.append(predict_one(item))
-    return out
+    return [predict_one(_row_to_input(r)) for _,r in latest.iterrows()]
+@app.get('/insights/clusters')
+def cluster_insights():
+    if not CLUSTER_REPORT.exists(): raise HTTPException(status_code=404,detail='Week 9 clustering report not found. Run the SLM pipeline first.')
+    df=pd.read_csv(CLUSTER_REPORT)
+    required=['station_id','kmeans_segment','dbscan_segment','pca_1','pca_2','energy_kwh','session_count']
+    missing=[c for c in required if c not in df.columns]
+    if missing: raise HTTPException(status_code=500,detail=f'Clustering report missing columns: {missing}')
+    points=df[required].copy()
+    return {
+        'stations':int(len(points)),
+        'kmeans_counts':{str(k):int(v) for k,v in points['kmeans_segment'].value_counts().sort_index().items()},
+        'dbscan_counts':{str(k):int(v) for k,v in points['dbscan_segment'].value_counts().sort_index().items()},
+        'noise_stations':int((points['dbscan_segment']==-1).sum()),
+        'points':points.to_dict(orient='records'),
+    }
+@app.get('/insights/feature-importance')
+def feature_importance():
+    if not SHAP_REPORT.exists(): raise HTTPException(status_code=404,detail='Week 8 SHAP report not found. Run the SLM pipeline first.')
+    shap=pd.read_csv(SHAP_REPORT)
+    regression=(shap[['feature','regression_mean_abs_shap']].sort_values('regression_mean_abs_shap',ascending=False).head(10).to_dict(orient='records'))
+    classification_shap=(shap[['feature','classification_mean_abs_shap']].sort_values('classification_mean_abs_shap',ascending=False).head(10).to_dict(orient='records'))
+    permutation=[]
+    if PERMUTATION_REPORT.exists():
+        perm=pd.read_csv(PERMUTATION_REPORT)
+        permutation=(perm[['feature','pr_auc_drop_mean','pr_auc_drop_std']].sort_values('pr_auc_drop_mean',ascending=False).head(10).to_dict(orient='records'))
+    return {'regression_shap':regression,'classification_xgboost_shap':classification_shap,'classification_rf_permutation':permutation,'notes':{'regression_shap':'Week 8 XGBoost mean absolute SHAP values.','classification_rf_permutation':'Week 7 Random Forest permutation importance measured by PR-AUC drop.'}}
