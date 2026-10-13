@@ -3,119 +3,154 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ChargeUp — Palo Alto EV Charging Intelligence</title>
+  <title>ChargeUp ML Dashboard</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div>
-      <div class="eyebrow">PALO ALTO • REAL CHARGEPOINT DATA • MACHINE LEARNING</div>
-      <h1>⚡ ChargeUp</h1>
-      <p>Next-hour charging-demand forecast + server-termination risk proxy.</p>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="bolt">⚡</div>
+      <div><strong>ChargeUp</strong><small>ML Control Center</small></div>
     </div>
-    <div id="health" class="pill">Checking API…</div>
-  </header>
 
-  <main>
-    <section class="hero-grid">
-      <article class="card metric">
-        <span>Regression target</span>
-        <strong>Next-hour demand</strong>
-        <small>kWh</small>
-      </article>
-      <article class="card metric">
-        <span>Classification target</span>
-        <strong>Server risk</strong>
-        <small>CPS/server termination proxy</small>
-      </article>
-      <article class="card metric">
-        <span>Station intelligence</span>
-        <strong>K-Means + DBSCAN</strong>
-        <small>usage segments</small>
-      </article>
-      <article class="card metric">
-        <span>Production guard</span>
-        <strong>PSI drift</strong>
-        <small>retraining trigger</small>
-      </article>
-    </section>
+    <nav>
+      <button class="nav-item active" data-page="overview"><span>◫</span> Overview</button>
+      <button class="nav-item" data-page="predictions"><span>⌁</span> Live Predictions</button>
+      <button class="nav-item" data-page="models"><span>◈</span> Models</button>
+      <button class="nav-item" data-page="performance"><span>↗</span> Performance</button>
+      <button class="nav-item" data-page="dataset"><span>▦</span> Dataset</button>
+      <button class="nav-item" data-page="clusters"><span>◎</span> Station Clusters</button>
+      <button class="nav-item" data-page="monitoring"><span>◉</span> Monitoring</button>
+      <button class="nav-item" data-page="api"><span>{ }</span> API</button>
+    </nav>
 
-    <section class="section-head">
-      <div>
-        <div class="eyebrow">REAL-DATA DEMO</div>
-        <h2>Palo Alto station predictions</h2>
-      </div>
-      <button id="refreshBtn">Refresh</button>
-    </section>
+    <div class="side-footer">
+      <div id="health" class="api-pill">Checking API...</div>
+      <small>chargeup-paloalto-v2.0.0</small>
+    </div>
+  </aside>
 
-    <section class="table-card">
-      <table>
-        <thead>
-          <tr>
-            <th>Station</th>
-            <th>Segment</th>
-            <th>Next hour</th>
-            <th>Server-risk probability</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="stationRows"></tbody>
-      </table>
-    </section>
+  <div class="app-shell">
+    <header class="mobile-topbar">
+      <button id="menuBtn" class="icon-btn">☰</button>
+      <strong>⚡ ChargeUp</strong>
+      <div id="mobileHealth" class="dot"></div>
+    </header>
 
-    <section class="split">
-      <article class="card">
-        <div class="eyebrow">PREDICT</div>
-        <h2>Try a real-style station-hour observation</h2>
-        <form id="predictForm" class="form-grid">
-          <label>Station ID<input name="station_id" value="PALO ALTO CA / HAMILTON #1"></label>
-          <label>Latitude<input name="latitude" type="number" step="0.000001" value="37.444572"></label>
-          <label>Longitude<input name="longitude" type="number" step="0.000001" value="-122.160309"></label>
-          <label>Sessions<input name="session_count" type="number" min="0" value="2"></label>
-          <label>Avg charging min<input name="avg_session_minutes" type="number" step="0.1" min="0" value="75"></label>
-          <label>Avg total duration min<input name="avg_total_duration_minutes" type="number" step="0.1" min="0" value="110"></label>
-          <label>Avg power kW<input name="avg_power_kw" type="number" step="0.1" min="0" value="6.1"></label>
-          <label>Current energy kWh<input name="energy_kwh" type="number" step="0.1" min="0" value="14.2"></label>
-          <label>Fee USD<input name="fee_usd" type="number" step="0.01" min="0" value="0"></label>
-          <label>Level 1 share<input name="level1_share" type="number" step="0.01" min="0" max="1" value="0"></label>
-          <label>Level 2 share<input name="level2_share" type="number" step="0.01" min="0" max="1" value="1"></label>
-          <label>DC fast share<input name="dc_fast_share" type="number" step="0.01" min="0" max="1" value="0"></label>
-          <button type="submit" class="primary">Run ML prediction</button>
-        </form>
-      </article>
-
-      <article class="card result-card">
-        <div class="eyebrow">MODEL OUTPUT</div>
-        <h2 id="resultTitle">Waiting for prediction</h2>
-        <div class="big-number" id="demandOut">—</div>
-        <div class="muted">predicted next-hour demand (kWh)</div>
-        <div class="prob-row">
-          <span>Server-termination risk</span>
-          <strong id="faultProb">—</strong>
+    <main class="content">
+      <section class="page active" id="page-overview">
+        <div class="page-head">
+          <div><div class="eyebrow">REAL PALO ALTO DATA • MACHINE LEARNING</div><h1>Overview</h1><p>Charging demand, fault-proxy risk, model health and station intelligence.</p></div>
+          <div class="version-badge">v2.0.0 • Production model</div>
         </div>
-        <div class="bar"><div id="faultBar"></div></div>
-        <div id="faultStatus" class="status neutral">NO RESULT</div>
-        <p class="muted">This classifier predicts a server-termination proxy derived from the source <code>Ended By</code> field; it is not a verified hardware-failure label.</p>
-      </article>
-    </section>
 
-    <section class="card architecture">
-      <div class="eyebrow">PIPELINE</div>
-      <h2>How ChargeUp works</h2>
-      <div class="flow">
-        <span>Palo Alto sessions</span><b>→</b>
-        <span>Station-hour aggregation</span><b>→</b>
-        <span>Time + geo + usage</span><b>→</b>
-        <span>Feature engineering</span><b>→</b>
-        <span>Regression + classifier</span><b>→</b>
-        <span>FastAPI</span>
-      </div>
-    </section>
-  </main>
+        <div class="kpi-grid">
+          <article class="kpi"><span>Charging sessions</span><strong>259,415</strong><small>real ChargePoint sessions</small></article>
+          <article class="kpi"><span>Charging stations</span><strong>47</strong><small>Palo Alto stations</small></article>
+          <article class="kpi"><span>Model features</span><strong>18</strong><small>shared training + inference</small></article>
+          <article class="kpi"><span>Station-hour rows</span><strong>234,976</strong><small>processed ML observations</small></article>
+        </div>
 
-  <footer>
-    ChargeUp capstone • City of Palo Alto ChargePoint dataset • FastAPI + scikit-learn + XGBoost
-  </footer>
+        <div class="grid-2">
+          <article class="panel">
+            <div class="panel-head"><div><span class="section-label">CHAMPION MODELS</span><h2>Deployed ML models</h2></div><span class="live-dot">● LIVE</span></div>
+            <div class="model-row"><div class="model-icon">XG</div><div><strong>XGBoost Regressor</strong><small>Next-hour demand forecasting</small></div><span class="tag">Champion</span></div>
+            <div class="model-row"><div class="model-icon">LR</div><div><strong>Calibrated Logistic Regression</strong><small>Server-termination risk proxy</small></div><span class="tag">Champion</span></div>
+            <div class="model-row"><div class="model-icon">KM</div><div><strong>K-Means + DBSCAN</strong><small>Station usage segmentation</small></div><span class="tag neutral-tag">Unsupervised</span></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head"><div><span class="section-label">SEALED TEST</span><h2>Key performance</h2></div></div>
+            <div class="perf-list">
+              <div><span>Demand MAE</span><strong>2.895 kWh</strong></div>
+              <div><span>Demand RMSE</span><strong>5.063 kWh</strong></div>
+              <div><span>Fault-proxy recall</span><strong>92.6%</strong></div>
+              <div><span>Fault-proxy PR-AUC</span><strong>0.0169</strong></div>
+            </div>
+          </article>
+        </div>
+
+        <article class="panel station-panel">
+          <div class="panel-head"><div><span class="section-label">REAL-DATA DEMO</span><h2>Latest station predictions</h2></div><button id="refreshBtn">Refresh</button></div>
+          <div class="table-wrap"><table><thead><tr><th>Station</th><th>Segment</th><th>Next hour</th><th>Risk probability</th><th>Status</th></tr></thead><tbody id="stationRows"></tbody></table></div>
+        </article>
+      </section>
+
+      <section class="page" id="page-predictions">
+        <div class="page-head"><div><div class="eyebrow">INFERENCE</div><h1>Live Predictions</h1><p>Send a real-style station-hour observation to both deployed models.</p></div></div>
+        <div class="grid-predict">
+          <article class="panel">
+            <span class="section-label">MODEL INPUT</span><h2>Station-hour observation</h2>
+            <form id="predictForm" class="form-grid">
+              <label>Station ID<input name="station_id" value="PALO ALTO CA / HAMILTON #1"></label>
+              <label>Sessions<input name="session_count" type="number" min="0" value="2"></label>
+              <label>Latitude<input name="latitude" type="number" step="0.000001" value="37.444572"></label>
+              <label>Longitude<input name="longitude" type="number" step="0.000001" value="-122.160309"></label>
+              <label>Avg charging min<input name="avg_session_minutes" type="number" step="0.1" value="75"></label>
+              <label>Avg total duration min<input name="avg_total_duration_minutes" type="number" step="0.1" value="110"></label>
+              <label>Avg power kW<input name="avg_power_kw" type="number" step="0.1" value="6.1"></label>
+              <label>Current energy kWh<input name="energy_kwh" type="number" step="0.1" value="14.2"></label>
+              <label>Fee USD<input name="fee_usd" type="number" step="0.01" value="0"></label>
+              <label>Level 1 share<input name="level1_share" type="number" step="0.01" min="0" max="1" value="0"></label>
+              <label>Level 2 share<input name="level2_share" type="number" step="0.01" min="0" max="1" value="1"></label>
+              <label>DC fast share<input name="dc_fast_share" type="number" step="0.01" min="0" max="1" value="0"></label>
+              <button type="submit" class="primary">Run both ML models</button>
+            </form>
+          </article>
+          <article class="panel output-panel">
+            <span class="section-label">MODEL OUTPUT</span><h2 id="resultTitle">Waiting for prediction</h2>
+            <div class="output-block"><span>Next-hour demand</span><strong id="demandOut">—</strong><small>kWh • XGBoost Regressor</small></div>
+            <div class="output-block"><span>Server-termination risk</span><strong id="faultProb">—</strong><small>Calibrated Logistic Regression</small><div class="bar"><div id="faultBar"></div></div></div>
+            <div id="faultStatus" class="status neutral">NO RESULT</div>
+            <div class="mini-grid"><div><span>Station segment</span><strong id="segmentOut">—</strong></div><div><span>Model version</span><strong id="versionOut">v2.0.0</strong></div></div>
+            <p class="note">Risk is a next-hour server-termination proxy derived from the source <code>Ended By</code> field, not a verified hardware-failure label.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" id="page-models">
+        <div class="page-head"><div><div class="eyebrow">MODEL REGISTRY</div><h1>Models</h1><p>What is actually trained, selected and deployed in ChargeUp.</p></div></div>
+        <div class="grid-2">
+          <article class="panel model-detail"><span class="model-type">REGRESSION</span><h2>XGBoost Regressor</h2><p>Forecasts <code>next_hour_demand_kwh</code>.</p><dl><div><dt>Status</dt><dd>Deployed champion</dd></div><div><dt>Selected depth</dt><dd>5</dd></div><div><dt>Selection</dt><dd>Nested temporal CV</dd></div><div><dt>Artifact</dt><dd>regression_model.joblib</dd></div></dl></article>
+          <article class="panel model-detail"><span class="model-type">CLASSIFICATION</span><h2>Calibrated Logistic Regression</h2><p>Predicts <code>station_fault_flag</code> server-risk proxy.</p><dl><div><dt>Status</dt><dd>Deployed champion</dd></div><div><dt>Calibration</dt><dd>Sigmoid</dd></div><div><dt>Priority metric</dt><dd>PR-AUC</dd></div><div><dt>Artifact</dt><dd>fault_model.joblib</dd></div></dl></article>
+        </div>
+        <article class="panel"><span class="section-label">MODELS EVALUATED</span><h2>SLM model journey</h2><div class="chip-list"><span>OLS Linear Regression</span><span>Gradient Descent</span><span>Ridge</span><span>Lasso</span><span>Logistic Regression</span><span>Decision Tree</span><span>Random Forest</span><span>XGBoost</span><span>K-Means</span><span>DBSCAN</span><span>PCA</span></div></article>
+        <article class="panel"><span class="section-label">18 MODEL FEATURES</span><h2>Shared feature schema</h2><div class="feature-list"><span>latitude</span><span>longitude</span><span>session_count</span><span>avg_session_minutes</span><span>avg_total_duration_minutes</span><span>avg_power_kw</span><span>energy_kwh</span><span>fee_usd</span><span>level1_share</span><span>level2_share</span><span>dc_fast_share</span><span>hour_sin</span><span>hour_cos</span><span>dow_sin</span><span>dow_cos</span><span>is_weekend</span><span>is_peak_hour</span><span>station_segment</span></div></article>
+      </section>
+
+      <section class="page" id="page-performance">
+        <div class="page-head"><div><div class="eyebrow">VALIDATION</div><h1>Performance</h1><p>Sealed-test metrics from the final real-data pipeline.</p></div></div>
+        <div class="grid-2">
+          <article class="panel"><span class="section-label">REGRESSION</span><h2>XGBoost vs OLS</h2><div class="metric-table"><div><span>Metric</span><b>XGBoost</b><b>OLS</b></div><div><span>MAE</span><b>2.895</b><b>3.206</b></div><div><span>RMSE</span><b>5.063</b><b>5.219</b></div><div><span>R²</span><b>0.0756</b><b>0.0177</b></div></div><p class="note">Paired bootstrap showed lower MAE for XGBoost than OLS.</p></article>
+          <article class="panel"><span class="section-label">CLASSIFICATION</span><h2>Fault-proxy classifier</h2><div class="metric-bars"><div><span>Recall <b>92.6%</b></span><i><em style="width:92.6%"></em></i></div><div><span>Precision <b>1.38%</b></span><i><em style="width:1.38%"></em></i></div><div><span>ROC-AUC <b>62.5%</b></span><i><em style="width:62.5%"></em></i></div><div><span>PR-AUC <b>1.69%</b></span><i><em style="width:1.69%"></em></i></div></div><p class="note">Positive class is only ~0.67%, so the task is extremely imbalanced.</p></article>
+        </div>
+      </section>
+
+      <section class="page" id="page-dataset">
+        <div class="page-head"><div><div class="eyebrow">DATA ENGINEERING</div><h1>Dataset</h1><p>City of Palo Alto Electric Vehicle Charging Station Usage.</p></div></div>
+        <div class="kpi-grid"><article class="kpi"><span>Raw sessions</span><strong>259,415</strong></article><article class="kpi"><span>Stations</span><strong>47</strong></article><article class="kpi"><span>Period</span><strong>2011–2020</strong></article><article class="kpi"><span>Server-ended sessions</span><strong>7,065</strong></article></div>
+        <article class="panel"><span class="section-label">SOURCE → MODEL TABLE</span><h2>Processing pipeline</h2><div class="pipeline"><span>ChargePoint CSV</span><b>→</b><span>Session cleaning</span><b>→</b><span>Station-hour aggregation</span><b>→</b><span>Exact next-hour labels</span><b>→</b><span>234,976 rows</span></div><p class="note">Weather, voltage, current and hardware-availability telemetry are not present in the City CSV and are not fabricated.</p></article>
+        <article class="panel"><span class="section-label">TARGETS</span><div class="grid-2 compact"><div class="target-card"><span>Regression</span><strong>next_hour_demand_kwh</strong><p>Energy delivered in the same station's next exact hour.</p></div><div class="target-card"><span>Classification</span><strong>station_fault_flag</strong><p>Whether next exact hour contains a server-ended charging session.</p></div></div></article>
+      </section>
+
+      <section class="page" id="page-clusters">
+        <div class="page-head"><div><div class="eyebrow">UNSUPERVISED LEARNING</div><h1>Station Clusters</h1><p>Usage-based station intelligence using K-Means, DBSCAN and PCA.</p></div></div>
+        <div class="grid-3"><article class="panel center-card"><div class="cluster-orb">KM</div><h2>K-Means</h2><p>Creates usage-based station segments used again as a model feature.</p></article><article class="panel center-card"><div class="cluster-orb">DB</div><h2>DBSCAN</h2><p>Detects dense station groups and unusual usage patterns.</p></article><article class="panel center-card"><div class="cluster-orb">PCA</div><h2>PCA</h2><p>Reduces station-usage dimensions for interpretable visual structure.</p></article></div>
+        <article class="panel"><span class="section-label">FEATURE FEEDBACK</span><h2>Clustering is not just visualization</h2><p>The assigned <code>station_segment</code> becomes the 18th supervised-model feature, so station usage behavior feeds back into regression and classification.</p></article>
+      </section>
+
+      <section class="page" id="page-monitoring">
+        <div class="page-head"><div><div class="eyebrow">PRODUCTION ML</div><h1>Monitoring</h1><p>Runtime health, PSI drift guard and retraining workflow.</p></div></div>
+        <div class="grid-3"><article class="kpi"><span>Prediction requests</span><strong id="requestCount">—</strong><small>current API runtime</small></article><article class="kpi"><span>Drift checks</span><strong id="driftCount">—</strong><small>PSI monitoring calls</small></article><article class="kpi"><span>Retrain requests</span><strong id="retrainCount">—</strong><small>recorded triggers</small></article></div>
+        <div class="grid-2"><article class="panel"><span class="section-label">DRIFT GUARD</span><h2>Population Stability Index</h2><div class="threshold"><strong>PSI ≥ 0.25</strong><span>retraining threshold</span></div><p>Current input distributions are compared with training-time baseline statistics.</p></article><article class="panel"><span class="section-label">RETRAINING</span><h2>Model lifecycle</h2><div class="pipeline vertical"><span>Drift detected</span><b>↓</b><span>Retrain trigger</span><b>↓</b><span>Run Palo Alto SLM pipeline</span><b>↓</b><span>Rebuild versioned artifacts</span></div></article></div>
+      </section>
+
+      <section class="page" id="page-api">
+        <div class="page-head"><div><div class="eyebrow">FASTAPI</div><h1>API</h1><p>The ML models are served as a local production-style API.</p></div><a class="primary-link" href="/docs" target="_blank">Open Swagger ↗</a></div>
+        <article class="panel endpoint-list"><div><span class="method get">GET</span><code>/health</code><p>Service and model health</p></div><div><span class="method get">GET</span><code>/metrics</code><p>Runtime counters and model metadata</p></div><div><span class="method post">POST</span><code>/predict</code><p>Run demand + risk models</p></div><div><span class="method post">POST</span><code>/predict/demand</code><p>Demand forecast only</p></div><div><span class="method post">POST</span><code>/predict/fault</code><p>Fault-proxy probability only</p></div><div><span class="method post">POST</span><code>/drift/check</code><p>Run PSI drift guard</p></div><div><span class="method post">POST</span><code>/retrain/trigger</code><p>Record retraining request</p></div></article>
+      </section>
+    </main>
+  </div>
 
   <script src="/static/app.js"></script>
 </body>
