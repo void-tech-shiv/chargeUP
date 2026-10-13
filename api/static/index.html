@@ -83,6 +83,7 @@
             <span class="section-label">MODEL INPUT</span><h2>Station-hour observation</h2>
             <form id="predictForm" class="form-grid">
               <label>Station ID<input name="station_id" value="PALO ALTO CA / HAMILTON #1"></label>
+              <label>Prediction date & time<input id="predictionTimestamp" name="timestamp" type="datetime-local"></label>
               <label>Sessions<input name="session_count" type="number" min="0" value="2"></label>
               <label>Latitude<input name="latitude" type="number" step="0.000001" value="37.444572"></label>
               <label>Longitude<input name="longitude" type="number" step="0.000001" value="-122.160309"></label>
@@ -124,6 +125,14 @@
           <article class="panel"><span class="section-label">REGRESSION</span><h2>XGBoost vs OLS</h2><div class="metric-table"><div><span>Metric</span><b>XGBoost</b><b>OLS</b></div><div><span>MAE</span><b>2.895</b><b>3.206</b></div><div><span>RMSE</span><b>5.063</b><b>5.219</b></div><div><span>R²</span><b>0.0756</b><b>0.0177</b></div></div><p class="note">Paired bootstrap showed lower MAE for XGBoost than OLS.</p></article>
           <article class="panel"><span class="section-label">CLASSIFICATION</span><h2>Fault-proxy classifier</h2><div class="metric-bars"><div><span>Recall <b>92.6%</b></span><i><em style="width:92.6%"></em></i></div><div><span>Precision <b>1.38%</b></span><i><em style="width:1.38%"></em></i></div><div><span>ROC-AUC <b>62.5%</b></span><i><em style="width:62.5%"></em></i></div><div><span>PR-AUC <b>1.69%</b></span><i><em style="width:1.69%"></em></i></div></div><p class="note">Positive class is only ~0.67%, so the task is extremely imbalanced.</p></article>
         </div>
+        <article class="panel insight-panel">
+          <span class="section-label">EXPLAINABILITY • REAL TRAINING ARTIFACTS</span><h2>Feature importance</h2>
+          <div class="grid-2 compact">
+            <div><h3>XGBoost demand • mean |SHAP|</h3><div id="regImportance" class="importance-list"><div class="loading">Loading SHAP values…</div></div></div>
+            <div><h3>Random Forest fault proxy • permutation PR-AUC drop</h3><div id="clfImportance" class="importance-list"><div class="loading">Loading permutation importance…</div></div></div>
+          </div>
+          <p class="note">These charts are rendered from <code>reports/week08_shap_importance.csv</code> and <code>reports/week07_permutation_importance.csv</code>, not hard-coded feature rankings.</p>
+        </article>
       </section>
 
       <section class="page" id="page-dataset">
@@ -136,18 +145,38 @@
       <section class="page" id="page-clusters">
         <div class="page-head"><div><div class="eyebrow">UNSUPERVISED LEARNING</div><h1>Station Clusters</h1><p>Usage-based station intelligence using K-Means, DBSCAN and PCA.</p></div></div>
         <div class="grid-3"><article class="panel center-card"><div class="cluster-orb">KM</div><h2>K-Means</h2><p>Creates usage-based station segments used again as a model feature.</p></article><article class="panel center-card"><div class="cluster-orb">DB</div><h2>DBSCAN</h2><p>Detects dense station groups and unusual usage patterns.</p></article><article class="panel center-card"><div class="cluster-orb">PCA</div><h2>PCA</h2><p>Reduces station-usage dimensions for interpretable visual structure.</p></article></div>
+        <article class="panel cluster-visual-panel">
+          <div class="panel-head"><div><span class="section-label">REAL WEEK-9 OUTPUT</span><h2>PCA station map</h2></div><div class="cluster-mini-stats"><span><b id="clusterStations">—</b> stations</span><span><b id="clusterNoise">—</b> DBSCAN noise</span></div></div>
+          <div id="clusterPlot" class="scatter-plot"><div class="loading">Loading real PCA coordinates…</div></div>
+          <div id="clusterLegend" class="cluster-legend"></div>
+          <p class="note">Each dot is a real Palo Alto charging station. Position is PCA 1/2 and segment is the K-Means assignment generated in Week 9.</p>
+        </article>
         <article class="panel"><span class="section-label">FEATURE FEEDBACK</span><h2>Clustering is not just visualization</h2><p>The assigned <code>station_segment</code> becomes the 18th supervised-model feature, so station usage behavior feeds back into regression and classification.</p></article>
       </section>
 
       <section class="page" id="page-monitoring">
         <div class="page-head"><div><div class="eyebrow">PRODUCTION ML</div><h1>Monitoring</h1><p>Runtime health, PSI drift guard and retraining workflow.</p></div></div>
         <div class="grid-3"><article class="kpi"><span>Prediction requests</span><strong id="requestCount">—</strong><small>current API runtime</small></article><article class="kpi"><span>Drift checks</span><strong id="driftCount">—</strong><small>PSI monitoring calls</small></article><article class="kpi"><span>Retrain requests</span><strong id="retrainCount">—</strong><small>recorded triggers</small></article></div>
-        <div class="grid-2"><article class="panel"><span class="section-label">DRIFT GUARD</span><h2>Population Stability Index</h2><div class="threshold"><strong>PSI ≥ 0.25</strong><span>retraining threshold</span></div><p>Current input distributions are compared with training-time baseline statistics.</p></article><article class="panel"><span class="section-label">RETRAINING</span><h2>Model lifecycle</h2><div class="pipeline vertical"><span>Drift detected</span><b>↓</b><span>Retrain trigger</span><b>↓</b><span>Run Palo Alto SLM pipeline</span><b>↓</b><span>Rebuild versioned artifacts</span></div></article></div>
+        <div class="grid-2">
+          <article class="panel"><span class="section-label">DRIFT GUARD</span><h2>Population Stability Index</h2><div class="threshold"><strong>PSI ≥ 0.25</strong><span>retraining threshold</span></div><p>Run PSI on the latest real station-hour observations and compare them with the training-time baseline.</p><button id="runDriftBtn" class="action-btn">Run real PSI drift check</button><div id="driftResult" class="action-result neutral-box">No drift check run yet.</div></article>
+          <article class="panel"><span class="section-label">RETRAINING</span><h2>Model lifecycle</h2><div class="pipeline vertical"><span>Drift detected</span><b>↓</b><span>Retrain trigger</span><b>↓</b><span>Run Palo Alto SLM pipeline</span><b>↓</b><span>Rebuild versioned artifacts</span></div><button id="retrainBtn" class="action-btn danger-action">Trigger retraining request</button><div id="retrainResult" class="action-result neutral-box">No retraining request recorded in this runtime.</div></article>
+        </div>
       </section>
 
       <section class="page" id="page-api">
         <div class="page-head"><div><div class="eyebrow">FASTAPI</div><h1>API</h1><p>The ML models are served as a local production-style API.</p></div><a class="primary-link" href="/docs" target="_blank">Open Swagger ↗</a></div>
-        <article class="panel endpoint-list"><div><span class="method get">GET</span><code>/health</code><p>Service and model health</p></div><div><span class="method get">GET</span><code>/metrics</code><p>Runtime counters and model metadata</p></div><div><span class="method post">POST</span><code>/predict</code><p>Run demand + risk models</p></div><div><span class="method post">POST</span><code>/predict/demand</code><p>Demand forecast only</p></div><div><span class="method post">POST</span><code>/predict/fault</code><p>Fault-proxy probability only</p></div><div><span class="method post">POST</span><code>/drift/check</code><p>Run PSI drift guard</p></div><div><span class="method post">POST</span><code>/retrain/trigger</code><p>Record retraining request</p></div></article>
+        <article class="panel endpoint-list">
+          <div><span class="method get">GET</span><code>/health</code><p>Service and model health</p></div>
+          <div><span class="method get">GET</span><code>/metrics</code><p>Runtime counters and model metadata</p></div>
+          <div><span class="method post">POST</span><code>/predict</code><p>Run demand + risk models</p></div>
+          <div><span class="method post">POST</span><code>/predict/demand</code><p>Demand forecast only</p></div>
+          <div><span class="method post">POST</span><code>/predict/fault</code><p>Fault-proxy probability only</p></div>
+          <div><span class="method post">POST</span><code>/drift/check</code><p>Run PSI drift guard on supplied observations</p></div>
+          <div><span class="method post">POST</span><code>/drift/demo</code><p>Run PSI on latest real Palo Alto observations</p></div>
+          <div><span class="method post">POST</span><code>/retrain/trigger</code><p>Record retraining request</p></div>
+          <div><span class="method get">GET</span><code>/insights/clusters</code><p>Real Week-9 PCA and cluster output</p></div>
+          <div><span class="method get">GET</span><code>/insights/feature-importance</code><p>SHAP and permutation-importance artifacts</p></div>
+        </article>
       </section>
     </main>
   </div>
